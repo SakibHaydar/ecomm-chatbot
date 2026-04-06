@@ -2,6 +2,49 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ShoppingBag,
+  PlusCircle,
+  MessageSquare,
+  Settings,
+  Search,
+  MoreVertical,
+  Send,
+  Bot,
+  User,
+  Lightbulb,
+  AlertTriangle,
+  TrendingUp,
+  Package,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
+
+// ─── Color Palette ────────────────────────────────────────────────
+const C = {
+  bg:         "#0d1117",   // dark navy (not pure black)
+  surface:    "#161b22",   // slightly elevated surface
+  surface2:   "#21262d",   // card/item surface
+  border:     "#30363d",   // subtle border
+  primary:    "#6e40c9",   // deep violet
+  primaryLt:  "#8b5cf6",   // lighter violet
+  primaryGlow:"rgba(110,64,201,0.25)",
+  accent:     "#58a6ff",   // sky blue accent
+  accentGlow: "rgba(88,166,255,0.15)",
+  success:    "#3fb950",   // green
+  warn:       "#d29922",   // amber
+  danger:     "#f85149",   // soft red
+  textPrimary:"#e6edf3",
+  textSecond: "#8b949e",
+  textMuted:  "#484f58",
+};
+
+// Gradient helpers
+const gradPrimary = `linear-gradient(135deg, ${C.primary}, ${C.primaryLt})`;
+const gradAccent  = `linear-gradient(135deg, #4c6ef5, ${C.accent})`;
 
 export default function Home() {
   const { messages, sendMessage, status } = useChat();
@@ -10,205 +53,590 @@ export default function Home() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
-    sendMessage({
-      text: input,
-    });
-
+    if (!input.trim() || status === "streaming") return;
+    sendMessage({ text: input });
     setInput("");
   };
 
-  // Auto-scroll to the bottom of the chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   return (
-    <main className="relative flex flex-col h-screen w-full overflow-hidden selection:bg-blue-500/30">
-      {/* Dynamic Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 premium-panel px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative w-10 h-10 bg-black rounded-full flex items-center justify-center border border-white/10">
-              <span className="text-xl">🛒</span>
-            </div>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: C.bg, color: C.textPrimary, fontFamily: "Roboto, sans-serif" }}>
+
+      {/* ══════════════════════════════════════════
+          LEFT SIDEBAR
+      ══════════════════════════════════════════ */}
+      <aside style={{
+        width: "268px", minWidth: "268px",
+        display: "flex", flexDirection: "column",
+        borderRight: `1px solid ${C.border}`,
+        background: C.surface,
+        flexShrink: 0,
+      }}>
+
+        {/* Brand */}
+        <div style={{
+          padding: "22px 20px",
+          borderBottom: `1px solid ${C.border}`,
+          display: "flex", alignItems: "center", gap: "12px",
+        }}>
+          <div style={{
+            background: gradPrimary,
+            padding: "9px",
+            borderRadius: "12px",
+            color: "white",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: `0 4px 16px ${C.primaryGlow}`,
+            flexShrink: 0,
+          }}>
+            <ShoppingBag size={18} strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-              E-Shop AI Agent
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Active System</span>
-            </div>
+            <h2 style={{ fontWeight: 700, fontSize: "15px", color: C.textPrimary, margin: 0, letterSpacing: "-0.2px" }}>
+              E-Shop AI
+            </h2>
+            <p style={{ fontSize: "10px", color: C.textMuted, margin: 0, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 500 }}>
+              Commerce Assistant
+            </p>
           </div>
         </div>
-        <div className="hidden sm:block">
-          <span className="text-[10px] py-1 px-3 rounded-full glass border border-white/5 text-gray-400 font-mono">
-            MODEL: KIMI-K2-INSTRUCT
-          </span>
-        </div>
-      </header>
 
-      {/* Main Chat Scroll Area */}
-      <div className="flex-1 overflow-y-auto pt-24 pb-32 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in zoom-in duration-700">
-              <div className="relative group">
-                <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                <div className="relative w-28 h-28 flex items-center justify-center premium-panel rounded-full border-white/20 shadow-2xl">
-                  <span className="text-5xl animate-pulse">✨</span>
+        {/* New Chat Button */}
+        <div style={{ padding: "18px 20px 10px 20px" }}>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => window.location.reload()}
+            style={{
+              width: "100%",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              background: gradPrimary,
+              color: "white",
+              padding: "11px 20px",
+              borderRadius: "10px",
+              fontWeight: 600, fontSize: "13px",
+              border: "none", cursor: "pointer",
+              boxShadow: `0 4px 16px ${C.primaryGlow}`,
+              fontFamily: "Roboto, sans-serif",
+            }}
+          >
+            <PlusCircle size={16} strokeWidth={2} />
+            New Chat
+          </motion.button>
+        </div>
+
+        {/* Recent Queries */}
+        <nav style={{ flex: 1, overflowY: "auto", padding: "8px 12px 16px 12px" }}>
+          <p style={{
+            padding: "12px 10px 8px 10px",
+            fontSize: "10px", fontWeight: 700, color: C.textMuted,
+            textTransform: "uppercase", letterSpacing: "0.12em", margin: 0,
+          }}>
+            Recent Queries
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            {[
+              "Winter Collection Check",
+              "Electronics Stock Update",
+              "Monthly Audit - Nov",
+              "Out of Stock Alerts",
+            ].map((label, i) => (
+              <motion.a
+                key={label}
+                href="#"
+                whileHover={{ x: 3 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  fontSize: "13px", fontWeight: 500,
+                  color: i === 0 ? C.primaryLt : C.textSecond,
+                  background: i === 0 ? `rgba(139,92,246,0.1)` : "transparent",
+                  textDecoration: "none",
+                  overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+                  transition: "background 0.15s, color 0.15s",
+                  border: i === 0 ? `1px solid rgba(139,92,246,0.18)` : "1px solid transparent",
+                }}
+                onMouseEnter={e => {
+                  if (i !== 0) {
+                    (e.currentTarget as HTMLElement).style.background = C.surface2;
+                    (e.currentTarget as HTMLElement).style.color = C.textPrimary;
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (i !== 0) {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                    (e.currentTarget as HTMLElement).style.color = C.textSecond;
+                  }
+                }}
+              >
+                <MessageSquare size={15} strokeWidth={1.8} style={{ flexShrink: 0, color: i === 0 ? C.primaryLt : C.textMuted }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+              </motion.a>
+            ))}
+          </div>
+        </nav>
+
+        {/* User Profile */}
+        <div style={{
+          padding: "14px 20px",
+          borderTop: `1px solid ${C.border}`,
+          display: "flex", alignItems: "center", gap: "12px",
+        }}>
+          <div style={{
+            width: "34px", height: "34px", borderRadius: "50%",
+            background: gradAccent,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "white", flexShrink: 0,
+            boxShadow: `0 4px 12px ${C.accentGlow}`,
+          }}>
+            <User size={16} strokeWidth={2} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: C.textPrimary, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Store Manager</p>
+            <p style={{ fontSize: "11px", color: C.textMuted, margin: 0 }}>Premium Plan</p>
+          </div>
+          <motion.button
+            whileHover={{ rotate: 90 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            style={{ background: "none", border: "none", padding: "4px", cursor: "pointer", color: C.textMuted, display: "flex" }}
+          >
+            <Settings size={15} strokeWidth={1.8} />
+          </motion.button>
+        </div>
+      </aside>
+
+      {/* ══════════════════════════════════════════
+          MAIN CHAT AREA
+      ══════════════════════════════════════════ */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: C.bg }}>
+
+        {/* Header */}
+        <header style={{
+          height: "64px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 36px",
+          borderBottom: `1px solid ${C.border}`,
+          background: `${C.surface}cc`,
+          backdropFilter: "blur(16px)",
+          flexShrink: 0, zIndex: 10,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Sparkles size={16} strokeWidth={2} style={{ color: C.primaryLt }} />
+            <h1 style={{ fontWeight: 700, fontSize: "15px", color: C.textPrimary, margin: 0 }}>
+              Inventory Assistant
+            </h1>
+            <span style={{
+              padding: "2px 9px", borderRadius: "6px",
+              background: "rgba(63,185,80,0.12)",
+              color: C.success,
+              fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+            }}>Online</span>
+          </div>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {[Search, MoreVertical].map((Icon, i) => (
+              <motion.button key={i} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                style={{
+                  padding: "8px", color: C.textSecond, background: "transparent",
+                  border: "none", borderRadius: "8px", cursor: "pointer", display: "flex",
+                }}
+              >
+                <Icon size={16} strokeWidth={1.8} />
+              </motion.button>
+            ))}
+          </div>
+        </header>
+
+        {/* Chat Feed */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "36px 44px", display: "flex", flexDirection: "column", gap: "28px" }}>
+
+          {/* Empty State */}
+          <AnimatePresence>
+            {messages.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "24px", textAlign: "center" }}
+              >
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                  style={{
+                    width: "68px", height: "68px",
+                    background: gradPrimary,
+                    borderRadius: "20px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: `0 12px 36px ${C.primaryGlow}`,
+                  }}
+                >
+                  <ShoppingBag size={30} strokeWidth={1.8} color="white" />
+                </motion.div>
+
+                <div>
+                  <h2 style={{ fontSize: "24px", fontWeight: 700, color: C.textPrimary, margin: "0 0 10px 0" }}>
+                    How can I help you today?
+                  </h2>
+                  <p style={{ color: C.textSecond, fontSize: "14px", maxWidth: "360px", lineHeight: "1.65", margin: "0 auto" }}>
+                    Ask me anything about products, prices, categories, or stock availability.
+                  </p>
                 </div>
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Modern Shopping, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 font-extrabold italic">Simplified.</span>
-                </h2>
-                <p className="text-gray-400 max-w-lg mx-auto text-base leading-relaxed">
-                  I am your intelligent commerce agent. I can browse the catalog, compare specs, and find the perfect deals for you in seconds.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl">
-                {["Find York track pants under $500", "Show me shoes in the Shoes category"].map((tip) => (
-                  <button
-                    key={tip}
-                    onClick={() => setInput(tip)}
-                    className="premium-panel p-4 rounded-2xl text-sm text-gray-300 hover:text-white hover:border-white/30 hover:scale-[1.02] transition-all text-left group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>&quot;{tip}&quot;</span>
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", maxWidth: "540px" }}>
+                  {[
+                    "Find York track pants under $500",
+                    "Show me shoes under $200",
+                    "What are the best-selling products?",
+                    "Find Nike products in the catalog",
+                  ].map((tip, i) => (
+                    <motion.button
+                      key={tip}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.18 + i * 0.08 }}
+                      whileHover={{ scale: 1.02, borderColor: `rgba(139,92,246,0.35)`, color: C.textPrimary }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setInput(tip)}
+                      style={{
+                        padding: "14px 16px",
+                        background: C.surface,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: "12px",
+                        fontSize: "13px",
+                        color: C.textSecond,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontWeight: 500,
+                        lineHeight: "1.45",
+                        transition: "border-color 0.15s, color 0.15s",
+                        fontFamily: "Roboto, sans-serif",
+                      }}
+                    >
+                      &quot;{tip}&quot;
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Messages */}
+          <AnimatePresence mode="popLayout">
+            {messages.map((m) => (
+              <motion.div
+                key={m.id}
+                style={{ maxWidth: "820px", width: "100%", margin: "0 auto" }}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {m.role === "user" ? (
+                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", gap: "12px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px", maxWidth: "74%" }}>
+                      <div style={{
+                        background: gradPrimary,
+                        color: "white",
+                        padding: "12px 18px",
+                        borderRadius: "18px 18px 4px 18px",
+                        boxShadow: `0 4px 18px ${C.primaryGlow}`,
+                      }}>
+                        <p style={{ fontSize: "14px", lineHeight: "1.6", margin: 0 }}>
+                          {m.parts.map((p, i) => p.type === "text" ? <span key={i}>{p.text}</span> : null)}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: "11px", color: C.textMuted, paddingRight: "4px" }}>{now}</span>
                     </div>
-                  </button>
+                    <div style={{
+                      width: "32px", height: "32px", borderRadius: "50%",
+                      background: `rgba(139,92,246,0.12)`,
+                      border: `1px solid rgba(139,92,246,0.2)`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: C.primaryLt, flexShrink: 0,
+                    }}>
+                      <User size={14} strokeWidth={2} />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "flex-start", gap: "12px" }}>
+                    <div style={{
+                      width: "32px", height: "32px", borderRadius: "50%",
+                      background: gradPrimary,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                      boxShadow: `0 4px 12px ${C.primaryGlow}`,
+                    }}>
+                      <Bot size={15} strokeWidth={2} color="white" />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "82%" }}>
+                      {m.parts.map((part, i) => {
+                        if (part.type === "text") {
+                          return (
+                            <motion.div key={i}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              style={{
+                                background: C.surface,
+                                color: C.textPrimary,
+                                padding: "12px 18px",
+                                borderRadius: "4px 18px 18px 18px",
+                                border: `1px solid ${C.border}`,
+                              }}
+                            >
+                              <p style={{ fontSize: "14px", lineHeight: "1.7", margin: 0, whiteSpace: "pre-wrap" }}>{part.text}</p>
+                            </motion.div>
+                          );
+                        }
+
+                        if (part.type === "reasoning") {
+                          const rp = part as { type: string; state?: string; details?: string; text?: string };
+                          const isStreaming = rp.state === "streaming";
+                          return (
+                            <details key={i} style={{
+                              background: C.surface, border: `1px solid ${C.border}`,
+                              borderRadius: "12px", overflow: "hidden",
+                            }}>
+                              <summary style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                padding: "10px 16px", cursor: "pointer",
+                                color: isStreaming ? C.primaryLt : C.textSecond,
+                                fontSize: "12px", fontWeight: 500, listStyle: "none",
+                              }}>
+                                {isStreaming
+                                  ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite", color: C.primaryLt }} /> Thinking...</>
+                                  : <><ChevronRight size={13} style={{ color: C.textMuted }} /> Thought Process</>}
+                              </summary>
+                              <div style={{
+                                padding: "12px 16px",
+                                borderTop: `1px solid ${C.border}`,
+                                color: C.textMuted,
+                                fontFamily: "monospace", fontSize: "11px",
+                                whiteSpace: "pre-wrap", lineHeight: 1.7,
+                              }}>
+                                {rp.details ?? rp.text}
+                              </div>
+                            </details>
+                          );
+                        }
+
+                        if (part.type.startsWith("tool-")) {
+                          const tp = part as { type: string; toolCallId?: string; state?: string };
+                          const toolName = part.type.replace("tool-", "");
+                          const done = tp.state === "output-available";
+                          return (
+                            <div key={tp.toolCallId ?? i} style={{
+                              display: "flex", alignItems: "center", gap: "8px",
+                              padding: "8px 14px",
+                              background: C.surface,
+                              border: `1px solid ${C.border}`,
+                              borderRadius: "10px",
+                              fontSize: "12px", color: C.textSecond,
+                            }}>
+                              {done ? (
+                                <><CheckCircle2 size={13} color={C.success} /><span>Catalog query: <code style={{ color: C.accent }}>{toolName}</code></span></>
+                              ) : (
+                                <><Loader2 size={13} style={{ animation: "spin 1s linear infinite", color: C.primaryLt }} /><span>Fetching <code style={{ color: C.accent }}>{toolName}</code>...</span></>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                      <span style={{ fontSize: "11px", color: C.textMuted, paddingLeft: "4px" }}>{now}</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Typing dots */}
+          {status === "streaming" && messages.at(-1)?.role !== "assistant" && (
+            <div style={{ maxWidth: "820px", width: "100%", margin: "0 auto", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: gradPrimary, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Bot size={15} color="white" />
+              </div>
+              <div style={{ background: C.surface, padding: "14px 18px", borderRadius: "4px 18px 18px 18px", border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "6px" }}>
+                {["-0.3s", "-0.15s", "0s"].map((d, i) => (
+                  <span key={i} className="animate-bounce" style={{ width: "7px", height: "7px", background: C.primaryLt, borderRadius: "50%", display: "inline-block", animationDelay: d }} />
                 ))}
               </div>
             </div>
           )}
 
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
-            >
-              <div className={`group relative w-full flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-                <div className="flex items-center gap-2 mb-2 px-1 opacity-40 group-hover:opacity-80 transition-opacity">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-gray-300">
-                    {m.role === "user" ? "Client Terminal" : "AI core"}
-                  </span>
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* ── Chat Input ── */}
+        <div style={{ padding: "16px 44px 26px", background: `linear-gradient(to top, ${C.bg} 70%, transparent)`, flexShrink: 0 }}>
+          <div style={{ maxWidth: "720px", margin: "0 auto" }}>
+            <form onSubmit={handleSubmit} style={{
+              display: "flex", alignItems: "center",
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: "14px",
+              padding: "8px 8px 8px 18px",
+              gap: "10px",
+              boxShadow: `0 8px 32px rgba(0,0,0,0.35)`,
+            }}>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                disabled={status === "streaming"}
+                placeholder="Ask about products, prices, or stock..."
+                style={{
+                  flex: 1, background: "transparent", border: "none", outline: "none",
+                  fontSize: "14px", color: C.textPrimary,
+                  fontFamily: "Roboto, sans-serif", height: "42px",
+                }}
+              />
+              <motion.button
+                type="submit"
+                disabled={status === "streaming" || !input.trim()}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.92 }}
+                style={{
+                  width: "42px", height: "42px",
+                  background: gradPrimary,
+                  border: "none", borderRadius: "10px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", flexShrink: 0,
+                  boxShadow: `0 4px 14px ${C.primaryGlow}`,
+                  opacity: !input.trim() || status === "streaming" ? 0.3 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
+                <Send size={16} color="white" strokeWidth={2} />
+              </motion.button>
+            </form>
+            <p style={{ textAlign: "center", fontSize: "11px", color: C.textMuted, marginTop: "8px", fontWeight: 500 }}>
+              AI can make mistakes. Verify critical information before placing orders.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* ══════════════════════════════════════════
+          RIGHT SIDEBAR
+      ══════════════════════════════════════════ */}
+      <aside className="hidden lg:flex" style={{
+        width: "288px", minWidth: "288px",
+        flexDirection: "column",
+        borderLeft: `1px solid ${C.border}`,
+        background: C.surface,
+        flexShrink: 0,
+      }}>
+
+        {/* Stock Insights */}
+        <div style={{ padding: "22px 22px 18px 22px", borderBottom: `1px solid ${C.border}` }}>
+          <h3 style={{ fontWeight: 700, fontSize: "13px", color: C.textPrimary, margin: "0 0 14px 0", display: "flex", alignItems: "center", gap: "7px" }}>
+            <Package size={14} strokeWidth={2} style={{ color: C.primaryLt }} />
+            Stock Insights
+          </h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {[
+              { value: "12", label: "Low Stock", color: C.warn },
+              { value: "05", label: "Out of Stock", color: C.danger },
+            ].map(({ value, label, color }) => (
+              <div key={label} style={{
+                background: C.surface2, padding: "14px 12px", borderRadius: "12px",
+                border: `1px solid ${C.border}`, textAlign: "center",
+              }}>
+                <p style={{ fontSize: "26px", fontWeight: 700, color, margin: 0 }}>{value}</p>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginTop: "4px", marginBottom: 0 }}>{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Filters + Category Health */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 22px" }}>
+          <h4 style={{ fontSize: "10px", fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px 0" }}>Quick Filters</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "26px" }}>
+            {[
+              { icon: AlertTriangle, label: "Urgent Restock", badge: "12", iconColor: C.danger, badgeBg: "rgba(248,81,73,0.1)", badgeColor: C.danger },
+              { icon: Package, label: "Incoming Orders", badge: "24", iconColor: C.warn, badgeBg: "rgba(210,153,34,0.1)", badgeColor: C.warn },
+              { icon: TrendingUp, label: "Top Performers", badge: <ChevronRight size={12} />, iconColor: C.primaryLt, badgeBg: C.surface2, badgeColor: C.textMuted },
+            ].map(({ icon: Icon, label, badge, iconColor, badgeBg, badgeColor }) => (
+              <motion.button
+                key={label}
+                whileHover={{ scale: 1.01, x: 2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 14px",
+                  background: C.surface2,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: "12px",
+                  cursor: "pointer", color: C.textSecond,
+                  fontSize: "13px", fontWeight: 500,
+                  fontFamily: "Roboto, sans-serif",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <Icon size={15} strokeWidth={2} style={{ color: iconColor, flexShrink: 0 }} />
+                  {label}
+                </span>
+                <span style={{ padding: "2px 8px", borderRadius: "999px", background: badgeBg, color: badgeColor, fontSize: "10px", fontWeight: 700, display: "flex", alignItems: "center" }}>
+                  {badge}
+                </span>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Category Health */}
+          <h4 style={{ fontSize: "10px", fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 14px 0" }}>Category Health</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {[
+              { label: "Electronics", pct: 85, from: C.primary, to: C.primaryLt },
+              { label: "Home & Living", pct: 42, from: "#f97316", to: "#fb923c" },
+              { label: "Apparel", pct: 92, from: "#10b981", to: "#34d399" },
+            ].map(({ label, pct, from, to }) => (
+              <div key={label}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", fontWeight: 500, marginBottom: "7px" }}>
+                  <span style={{ color: C.textSecond }}>{label}</span>
+                  <span style={{ color: C.textMuted }}>{pct}%</span>
                 </div>
-
-                <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-xl p-5 text-sm relative transition-all duration-300 shadow-xl ${m.role === "user"
-                    ? "bg-[var(--color-primary)]/20 backdrop-blur-md border border-white/20 text-white rounded-tr-none"
-                    : "premium-panel text-gray-100 rounded-tl-none border-white/10"
-                    }`}
-                >
-                  <div className="whitespace-pre-wrap leading-relaxed select-text">
-                    {m.parts.map((part, i) => {
-                      if (part.type === "text") {
-                        return <div key={i} className="mb-2 last:mb-0">{part.text}</div>;
-                      }
-
-                      if (part.type === "reasoning") {
-                        const reasoningPart = part as any;
-                        const isStreaming = reasoningPart.state === 'streaming';
-
-                        return (
-                          <details key={i} className="mb-4 text-xs glass border border-white/10 rounded-xl group overflow-hidden transition-all duration-300">
-                            <summary className="font-semibold text-gray-400 list-none flex items-center gap-2 select-none cursor-pointer p-3 hover:bg-white/5 transition-colors">
-                              {isStreaming ? (
-                                <div className="flex items-center gap-2 text-blue-400 min-w-0">
-                                  <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                                  <span className="truncate uppercase tracking-tighter">Analyzing Logic...</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2 group-open:text-indigo-400 transition-colors">
-                                  <span className="w-3 h-3 flex items-center justify-center shrink-0 transition-transform duration-200 group-open:rotate-90">▶</span>
-                                  <span className="uppercase tracking-tighter">Neural Thought Path</span>
-                                </div>
-                              )}
-                            </summary>
-                            <div className="px-4 py-3 border-t border-white/10 text-gray-400 font-mono text-[10px] whitespace-pre-wrap leading-relaxed bg-black/20 italic">
-                              {reasoningPart.details || reasoningPart.text}
-                            </div>
-                          </details>
-                        );
-                      }
-
-                      if (part.type.startsWith("tool-")) {
-                        const toolPart = part as any;
-                        const callId = toolPart.toolCallId;
-                        const toolName = part.type.replace("tool-", "");
-                        const hasResult = toolPart.state === 'output-available';
-
-                        return (
-                          <div key={callId} className="inline-flex items-center gap-3 px-3 py-1.5 glass-morphism border-white/10 text-[10px] my-3">
-                            {hasResult ? (
-                              <>
-                                <span className="text-green-400 font-bold">✓</span>
-                                <span className="text-gray-400 uppercase tracking-widest font-mono">DB QUERY COMPLETED: {toolName}</span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping shrink-0"></div>
-                                <span className="text-blue-400 uppercase tracking-widest font-mono">FETCHING {toolName}...</span>
-                              </>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
+                <div style={{ height: "5px", background: C.surface2, borderRadius: "999px", overflow: "hidden" }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+                    style={{ height: "100%", background: `linear-gradient(90deg, ${from}, ${to})`, borderRadius: "999px" }}
+                  />
                 </div>
               </div>
-            </div>
-          ))}
-          {status === "streaming" && (
-            <div className="flex justify-start">
-              <div className="glass-dark border border-white/10 rounded-2xl rounded-tl-none p-5 shadow-2xl flex items-center gap-3">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} className="h-4" />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Floating Input Dock */}
-      <footer className="fixed bottom-8 left-0 right-0 z-50 px-4 sm:px-6 pointer-events-none">
-        <div className="max-w-4xl mx-auto w-full premium-panel rounded-2xl p-2 pointer-events-auto border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-center gap-2"
-          >
-            <input
-              className="flex-1 bg-transparent px-4 py-3 text-sm outline-none text-gray-200 placeholder:text-gray-500 font-medium"
-              value={input}
-              placeholder="Ask anything about the catalog..."
-              onChange={(e) => setInput(e.target.value)}
-            />
-            <button
-              type="submit"
-              disabled={status === "streaming" || !input.trim()}
-              className="bg-blue-600/80 hover:bg-blue-500 text-white p-3 rounded-xl font-bold text-xs transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 flex items-center gap-2 group"
-            >
-              <span>SEND</span>
-              <span className="group-hover:translate-x-1 transition-transform">→</span>
-            </button>
-          </form>
+        {/* AI Suggestion */}
+        <div style={{
+          padding: "18px 22px",
+          borderTop: `1px solid ${C.border}`,
+          background: `linear-gradient(135deg, rgba(110,64,201,0.06), rgba(88,166,255,0.04))`,
+        }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+            <Lightbulb size={16} strokeWidth={2} style={{ color: C.warn, marginTop: "1px", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: C.textPrimary, margin: "0 0 5px 0" }}>AI Suggestion</p>
+              <p style={{ fontSize: "11px", color: C.textSecond, margin: 0, lineHeight: 1.65 }}>
+                Winter items are moving 20% faster than last week. Consider early restocking for popular seasonal products.
+              </p>
+            </div>
+          </div>
         </div>
-        <p className="text-[9px] text-center text-gray-500 mt-4 uppercase tracking-[0.2em] font-medium pointer-events-none">
-          SYSTEM INTERFACE V2.1 // POWERED BY NEURAL ENGINE
-        </p>
-      </footer>
-    </main>
+      </aside>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
   );
 }
